@@ -7,58 +7,7 @@ on:
       - 'v*'
 
 jobs:
-  build-web:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.x
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build for production
-        run: pnpm build
-
-      - name: Prepare directories
-        run: |
-          mv dist dist-prod
-          cp dist-prod/index.html dist-prod/404.html
-
-      - name: Create production build archive
-        run: |
-          zip -r dist.zip dist-prod
-
-      - name: Upload web build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: dist.zip
-
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist-prod
-          publish_branch: gh-pages
-          force_orphan: true
-
+  
   publish-tauri:
     permissions:
       contents: write
@@ -106,18 +55,13 @@ jobs:
           run: pnpm tauri build
 
   release:
-    needs: [build-web, publish-tauri]
+    needs: [ publish-tauri]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Download web build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
